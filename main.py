@@ -20,7 +20,7 @@ upper = np.array([0, 0, 255])
 
 def canny(image):
     blur = cv2.GaussianBlur(image,(5,5),0)
-    canny = cv2.Canny(blur,50,150)
+    canny = cv.Canny(blur, 50, 200, None, 3)
     return canny
 
 def region_of_interest(image, color):
@@ -38,7 +38,7 @@ while True:
     ret, src = cap.read()
     src = cv2.resize(src, (width+1, height+1))
 
-    dst = cv.Canny(src, 50, 200, None, 3)
+    dst = canny(src)
     masked_dst = region_of_interest(dst, (255, 255, 255))
     cdstP = cv.cvtColor(masked_dst, cv.COLOR_GRAY2BGR)
 
@@ -52,10 +52,12 @@ while True:
             l = linesP[i][0]
 
             # 각도가 30도 이하면 걸러내기
-
-            degree = math.tan(math.radians(30))
-            if math.atan(degree) > 30
-            cv.line(masked_cdstP, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 10, cv.LINE_AA)
+            grad = (l[3] - l[1]) / (l[2] - l[0])
+            rad = math.atan(grad)
+            deg = math.degrees(rad)
+            deg = (deg + 360) % 180
+            if deg>=20 and deg<=160:
+                cv.line(masked_cdstP, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 1, cv.LINE_AA)
 
     fm_cdstP = fillter(masked_cdstP)
 
@@ -142,26 +144,25 @@ while True:
         if(len(cPoint)):
             if cPoint[0] < (centerX):
                 print("left")
-                cv.line(fm_cdstP, (centerX - 200, 0), (centerX - 250, 0), (255, 0, 0), 80, cv.LINE_AA)
+                cv.line(fm_cdstP, (centerX - 200, 0), (centerX - 250, 0), (255, 0, 0), 50, cv.LINE_AA)
             elif cPoint[0] > (centerX):
                 print("right")
-                cv.line(fm_cdstP, (centerX + 200, 0), (centerX + 250, 0), (255, 0, 0), 80, cv.LINE_AA)
+                cv.line(fm_cdstP, (centerX + 200, 0), (centerX + 250, 0), (255, 0, 0), 50, cv.LINE_AA)
             else:
                 print("center")
     # 기울기 중 무한대가 있을경우
     elif (lGrad!=INF) and (rGrad==INF):
         print("INFright")
-        cv.line(fm_cdstP, (centerX + 200, 0), (centerX + 250, 0), (255, 0, 0), 100, cv.LINE_AA)
+        cv.line(fm_cdstP, (centerX + 200, 0), (centerX + 250, 0), (255, 0, 0), 50, cv.LINE_AA)
     elif (lGrad == INF) and (rGrad != INF):
         print("INFleft")
-        cv.line(fm_cdstP, (centerX - 200, 0), (centerX - 250, 0), (255, 0, 0), 100, cv.LINE_AA)
+        cv.line(fm_cdstP, (centerX - 200, 0), (centerX - 250, 0), (255, 0, 0), 50, cv.LINE_AA)
 
     else:
         print("center")
 
     # 출력
     cv.imshow("Source", src)
-    cv.imshow("Masked Source", canny(src))
     cv.imshow("Detected Lines (in red) - Probabilistic Line Transform", fm_cdstP)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
